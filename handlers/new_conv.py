@@ -50,9 +50,12 @@ async def start_conv(message: Message):
         j = 0
         while users[user_id][chat_id][j][0] is not None:
             j += 1
+            if j == 5:
+                j = 0
+                break
         convs_count[user_id] = j
-        if convs_count[user_id] == 4:
-            convs_count[user_id] = 0
+    
+    print(users)
 
     if user_id not in users:
         chats = {}
@@ -70,12 +73,13 @@ async def start_conv(message: Message):
         "Вы начали новый диалог без контекста.",
         reply_markup=keyboard
     )
+    
 
     if user_id not in request_count:
         request_count[user_id] = 1
     else:
         request_count[user_id] += 1
-        if request_count[user_id] % 4 == 0:
+        if request_count[user_id] % 2 == 0:
             await message.answer(
                 "По ссылке ниже можно поддержать разработчика. 👉👈\nhttps://www.tinkoff.ru/rm/dertsyan.narek1/3q6pb4506"
             )
@@ -92,6 +96,8 @@ async def all_conv(message: Message):
     j = 0
     while users[user_id][chat_id][j][0] is not None:
         j += 1
+        if j == 5:
+            break
     if j == 0:
         # await message.answer("There are no conversations yet")
         await message.answer("У вас пока нет диалогов")
@@ -103,7 +109,7 @@ async def all_conv(message: Message):
         await message.answer(
                # "Select the conversation you want to return to.",
                "Выберите диалог к которому вы хотите вернуться.",
-                reply_markup=builder.as_markup(resize_keyboard=True)
+               reply_markup=builder.as_markup(resize_keyboard=True)
                 )
 
 
@@ -117,22 +123,27 @@ async def request(message: types.Message):
 
     if user_id not in users:
         await start_conv(message)
-        user_id = message.from_user.id
-        chat_id = message.chat.id
 
-    for i in range(convs_count[user_id]+1):
-        if message.text == users[user_id][chat_id][i][0]:
-            convs_count[user_id] = i
-            await message.answer(
-                    # "Now, you have change the conversation context",
-                    "Вы перешли к диалогу с другим контекстом",
-                    reply_markup=keyboard
-                    )
-            changed = True
+    i = 0
+    while message.text != users[user_id][chat_id][i][0] and users[user_id][chat_id][i][0] is not None:
+        i += 1
+        if i == 5:
+            i = 0
+            break
+    if message.text == users[user_id][chat_id][i][0]:
+        convs_count[user_id] = i
+        await message.answer(
+                f"Вы перешли к далогу:\n{users[user_id][chat_id][i][0]}",
+                reply_markup=keyboard
+                )
+        changed = True
 
     if changed is False:
+        print("i will answer")
         await bot.send_chat_action(chat_id, "typing")
         response = users[user_id][chat_id][convs_count[user_id]][1].get_answer(message.text)
         users[user_id][chat_id][convs_count[user_id]][0] = users[user_id][chat_id][convs_count[user_id]][1].conversation_name(response)
-        await message.answer(f"{response}")
+        await message.answer(f"{response}",
+                             reply_markup=keyboard
+                             )
 
