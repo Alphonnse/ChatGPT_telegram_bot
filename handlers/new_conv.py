@@ -75,6 +75,12 @@ async def start_conv(message: Message):
         reply_markup=keyboard
     )
 
+    await message.answer(
+        # "You have started a new conversation without context.",
+        "Обратите внимание, что могут быть задержки в ответах бота в связи с большой нагрузкий.",
+        reply_markup=keyboard
+    )
+
     if user_id not in request_count:
         request_count[user_id] = 1
     else:
@@ -142,7 +148,6 @@ async def request(message: types.Message):
         changed = True
 
     if changed is False:
-        print("i will answer")
         await bot.send_chat_action(chat_id, "typing")
         response = users[user_id][chat_id][convs_count[user_id]][1].get_answer(message.text)
         users[user_id][chat_id][convs_count[user_id]][0] = users[user_id][chat_id][convs_count[user_id]][1].conversation_name(response)
